@@ -1,0 +1,8 @@
+archive
+www/archive
+www/fda10_extra.gpkg
+rsconnect
+copy2drive.R
+prep_data.R
+upload2shinyio.R
+Rgui.lnk
