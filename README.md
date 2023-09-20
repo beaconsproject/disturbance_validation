@@ -23,14 +23,14 @@ Functionality
 
 Select an area of interest:
   - Select an existing fundamental drainage area (FDA)
-  - Upload an area of interest (AOI) polygon as a geopackage (�.gpkg�)
+  - Upload an area of interest (AOI) polygon as a geopackage (".gpkg")
   - If you upload an area of interest, the projection must be EPSG:3579 (NAD83(CSRS) / Yukon Albers). Moreover, in order to generate intactness and footprint maps, the uploaded polygon must overlay the data extent provided within the app.
 
 Input data
 
 Regional disturbance map
 
-The key input data is the regional disturbance dataset. Currently, only open source file geopackages (�gpkg�) can be used. The demo dataset (fda_10ab.gpkg) consists of a fundamental drainage area (watershed) located in the Yukon. It includes the following layers. The fda_10ab.gpkg geopackage includes the following layers:
+The key input data is the regional disturbance dataset. Currently, only open source file geopackages (".gpkg") can be used. The demo dataset (fda_10ab.gpkg) consists of a fundamental drainage area (watershed) located in the Yukon. It includes the following layers. The fda_10ab.gpkg geopackage includes the following layers:
   - fda: watershed (fundamental drainage area) boundary
   - sd_line: linear anthropogenic features
   - sd_poly: areal (polygonal) anthropogenic features
