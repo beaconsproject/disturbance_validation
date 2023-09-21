@@ -61,7 +61,7 @@ server = function(input, output, session) {
   ##############################################################################
   fda <- reactive({
     if (is.null(input$upload_poly)) {
-      st_read(paste0('data/fda_',input$fda,'.gpkg'), 'fda', quiet=T) %>% st_zm(drop=T) %>%
+      st_read(paste0('www/fda_',tolower(input$fda),'.gpkg'), 'fda', quiet=T) %>% st_zm(drop=T) %>%
         st_transform(4326)
     } else {
       aoi_fda()
@@ -70,7 +70,7 @@ server = function(input, output, session) {
 
   linear <- reactive({
     if (is.null(input$upload_poly)) {
-      st_read(paste0('data/fda_',input$fda,'.gpkg'), 'sd_line', quiet=T) %>%
+      st_read(paste0('www/fda_',tolower(input$fda),'.gpkg'), 'sd_line', quiet=T) %>%
         st_transform(4326)
     } else {
       aoi_line()
@@ -79,7 +79,7 @@ server = function(input, output, session) {
 
   areal <- reactive({
     if (is.null(input$upload_poly)) {
-      st_read(paste0('data/fda_',input$fda,'.gpkg'), 'sd_poly', quiet=T) %>% 
+      st_read(paste0('www/fda_',tolower(input$fda),'.gpkg'), 'sd_poly', quiet=T) %>% 
         st_cast('MULTIPOLYGON') %>%
         st_transform(4326)
     } else {
@@ -89,7 +89,7 @@ server = function(input, output, session) {
 
   grd <- reactive({
     if (is.null(input$upload_poly)) {
-      st_read(paste0('data/fda_',input$fda,'.gpkg'), 'nts_yt_9x9', quiet=T) %>% 
+      st_read(paste0('www/fda_',tolower(input$fda),'.gpkg'), 'nts_yt_9x9', quiet=T) %>% 
         #st_cast('MULTIPOLYGON') %>%
         st_transform(4326)
     } else {
