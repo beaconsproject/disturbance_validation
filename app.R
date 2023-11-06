@@ -10,6 +10,7 @@ library(shinydashboard)
 library(leaflet.esri)
 
 fda_list <- c("10AA", "10AB", "10AD") #, "10BC")
+fda_list <- c('10AA_002')
 spot = "https://mapservices.gov.yk.ca/imagery/rest/services/Satellites/Satellites_MedRes_Update/ImageServer"
 google = "https://mts1.google.com/vt/lyrs=s&hl=en&src=app&x={x}&y={y}&z={z}&s=G"
 
@@ -28,9 +29,10 @@ ui = dashboardPage(
     sidebarMenu(
         menuItem("View disturbances", tabName = "fri", icon = icon("th"))
     ),
-    selectInput("fda", label="Select an FDA:", choices=fda_list, selected='10AB'),
+    selectInput("fda", label="Select an FDA:", choices=fda_list, selected='10AA_002'),
     fileInput(inputId = "upload_poly", label = "Or upload a polygon:", multiple = FALSE, accept = ".gpkg"),
-    selectInput("inv", label = "Feature type:", choices = c("Areal","Linear")),
+    selectInput("db", label = "Features to view:", choices = c("BP features","YG features","SD features")),
+    selectInput("inv", label = "Feature type to query:", choices = c("Areal","Linear")),
     hr(),
     actionButton("goButton", "Select random feature")
   ),
@@ -70,7 +72,7 @@ server = function(input, output, session) {
 
   linear <- reactive({
     if (is.null(input$upload_poly)) {
-      st_read(paste0('www/fda_',tolower(input$fda),'.gpkg'), 'sd_line', quiet=T) %>%
+      st_read(paste0('www/fda_',tolower(input$fda),'.gpkg'), paste0(substr(tolower(input$db),1,2),'_line'), quiet=T) %>%
         st_transform(4326)
     } else {
       aoi_line()
@@ -79,7 +81,7 @@ server = function(input, output, session) {
 
   areal <- reactive({
     if (is.null(input$upload_poly)) {
-      st_read(paste0('www/fda_',tolower(input$fda),'.gpkg'), 'sd_poly', quiet=T) %>% 
+      st_read(paste0('www/fda_',tolower(input$fda),'.gpkg'), paste0(substr(tolower(input$db),1,2),'_poly'), quiet=T) %>% 
         st_cast('MULTIPOLYGON') %>%
         st_transform(4326)
     } else {
@@ -122,7 +124,7 @@ server = function(input, output, session) {
     file <- input$upload_poly$datapath
     ext <- tools::file_ext(file)
     if(ext == "gpkg"){
-      aoi <- st_read(file, 'sd_line') %>% st_transform(4326)
+      aoi <- st_read(file, paste0(substr(tolower(input$db),1,2),'_line')) %>% st_transform(4326)
     } else {
       showNotification("Wrong file type, must be geopackage (.gpkg)", type = "error")
     }
@@ -132,7 +134,7 @@ server = function(input, output, session) {
     file <- input$upload_poly$datapath
     ext <- tools::file_ext(file)
     if(ext == "gpkg"){
-      aoi <- st_read(file, 'sd_poly') %>% st_transform(4326)
+      aoi <- st_read(file, paste0(substr(tolower(input$db),1,2),'_poly')) %>% st_transform(4326)
     } else {
       showNotification("Wrong file type, must be geopackage (.gpkg)", type = "error")
     }
