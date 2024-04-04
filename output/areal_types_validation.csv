@@ -1,0 +1,15 @@
+TYPE_INDUSTRY,TYPE_DISTURBANCE,type_industry_test,type_disturbance_test,type_combination_test
+Rural,Rural Residential,ok,ok,not expected
+Rural,Rural Residential,ok,ok,not expected
+Rural,Rural Residential,ok,ok,not expected
+Rural,Rural Residential,ok,ok,not expected
+Rural,Rural Residential,ok,ok,not expected
+Rural,Rural Residential,ok,ok,not expected
+Rural,Rural Residential,ok,ok,not expected
+Rural,Building,ok,ok,not expected
+Rural,Building,ok,ok,not expected
+Rural,Building,ok,ok,not expected
+Mining,Clearing,ok,ok,not expected
+Mining,Clearing,ok,ok,not expected
+Mining,Clearing,ok,ok,not expected
+Forestry,Clearing,ok,ok,not expected
