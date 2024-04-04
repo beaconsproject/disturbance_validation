@@ -5,7 +5,7 @@ library(dplyr)
 library(DT)
 #library(leaflet.esri)
 library(shinydashboard)
-#options(shiny.maxRequestSize=100*1024^2) 
+options(shiny.maxRequestSize=100*1024^2) 
 source('functions/validate_features.R')
 spot = "https://mapservices.gov.yk.ca/imagery/rest/services/Satellites/Satellites_MedRes_Update/ImageServer"
 google = "https://mts1.google.com/vt/lyrs=s&hl=en&src=app&x={x}&y={y}&z={z}&s=G"
