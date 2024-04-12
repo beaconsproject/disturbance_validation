@@ -15,4 +15,4 @@ The app can be run from a local machine using the following steps:
 
     shiny::runGitHub("beaconsproject/disturbance_validation")
 
-![app](app.jpg)
+![app](www/app.jpg)
