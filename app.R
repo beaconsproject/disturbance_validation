@@ -27,37 +27,36 @@ ui = dashboardPage(skin = "green",
   dashboardSidebar(
     sidebarMenu(id="tabs",
       menuItem("Introduction", tabName="intro", icon=icon("th")),
+      menuItem("Upload data", tabName = "get", icon = icon("th")),
       menuItem("Validate attributes", tabName = "val", icon = icon("th")),
-      menuItem("Random features", tabName = "rnd", icon = icon("th"))
+      menuItem("View random features", tabName = "rnd", icon = icon("th"))
     ),
     conditionalPanel(
-      condition="input.tabs=='val'",
+      condition="input.tabs=='get'",
       hr(),
       HTML("&nbsp;&nbsp; 1. UPLOAD DATA"),
-      fileInput("gpkg", "Upload geopackage:", accept=".gpkg"),
-      hr(),
+      fileInput("gpkg", "Geopackage:", accept=".gpkg"),
       HTML("&nbsp;&nbsp; 2. SELECT LAYERS"),
       selectInput("bnd", "Study area:", choices = NULL),
       selectInput("line", "Linear disturbances:", choices = NULL),
       selectInput("poly", "Areal disturbances:", choices = NULL),
-      actionButton("mapButton", "View disturbances"),
-      hr(),
-      HTML("&nbsp;&nbsp; 3. VALIDATE ATTRIBUTES"),
-      #textInput("output", "Output directory:", value = 'output'),
-      actionButton("valButton", "Validate results")
-      #div(style="position:relative; left:calc(6%);", actionButton("valButton", "Validate results")),
-      #br(),
-      #div(style="position:relative; left:calc(6%);", downloadButton("downloadData", "Download results", style='color: #000'))
-      #hr(),
-      #selectInput("db", label = "Features to view:", choices = c("BP features","YG features","SD features")),
-      #selectInput("inv", label = "Feature type to query:", choices = c("Areal","Linear")),
-      #hr(),
-      ),
+      br(),
+      HTML("&nbsp;&nbsp; 3. VIEW DISTURBANCES"),
+      actionButton("mapButton", "Map features")
+      #HTML("&nbsp;&nbsp; VIEW RANDOM FEATURE"),
+      #actionButton("rndButton", "Select random feature")
+    ),
+    conditionalPanel(
+      condition="input.tabs=='val'",
+      hr(), 
+      HTML("&nbsp;&nbsp; VALIDATE ATTRIBUTES"),
+      actionButton("valButton", "Run validation code")
+    ),
     conditionalPanel(
       condition="input.tabs=='rnd'",
-      hr(), 
+      hr(),
       HTML("&nbsp;&nbsp; VIEW DISTURBANCE"),
-      actionButton("goButton", "Select random feature")
+      actionButton("rndButton", "Select random feature")
     )
     ),
 
@@ -71,19 +70,44 @@ ui = dashboardPage(skin = "green",
                 )
             )
         ),
-        tabItem(tabName="val",
+        tabItem(tabName="get",
             fluidRow(
                 tabBox(
                     id = "one", width="8",
-                    tabPanel("Mapview", leafletOutput("map1", height=750)),
+                    tabPanel("Mapview", leafletOutput("map1", height=750))
+                ),
+                tabBox(
+                    id = "two", width="4",
+                    tabPanel("Areal features", DT::dataTableOutput("tab1a", height=750)),
+                    tabPanel("Linear features", DT::dataTableOutput("tab1b", height=750))
+                )
+            )
+        ),
+        tabItem(tabName="val",
+            fluidRow(
+                tabBox(
+                    id = "one", width="12",
+                    #tabPanel("Mapview", leafletOutput("map2", height=750)),
                     tabPanel("Linear summary", verbatimTextOutput("linearText")),
                     tabPanel("Linear errors", DTOutput("linearTable")),
                     tabPanel("Areal summary", verbatimTextOutput("arealText")),
                     tabPanel("Areal errors", DTOutput("arealTable"))
+                )#,
+                #tabBox(
+                #    id = "two", width="4",
+                #    tabPanel("Random features", DT::dataTableOutput("tab2", height=750))
+                #)
+            )
+        ),
+        tabItem(tabName="rnd",
+            fluidRow(
+                tabBox(
+                    id = "one", width="8",
+                    tabPanel("Mapview", leafletOutput("map2", height=750))
                 ),
                 tabBox(
                     id = "two", width="4",
-                    tabPanel("Random features", DT::dataTableOutput("tab1", height=750))
+                    tabPanel("Random feature", DT::dataTableOutput("tab2", height=750))
                 )
             )
         )
@@ -156,7 +180,7 @@ server = function(input, output, session) {
   ##############################################################################
   # Select a random feature
   ##############################################################################
-  ntype <- eventReactive(input$goButton, {
+  ntype <- eventReactive(input$rndButton, {
     choice <- sample(c("Linear","Areal"),1)
     if (choice=="Linear") {
       x = "Linear"
@@ -183,15 +207,15 @@ server = function(input, output, session) {
       addProviderTiles("Esri.WorldTopoMap", group="Esri.WorldTopoMap") %>%
       addProviderTiles("Esri.WorldImagery", group="Esri.WorldImagery") %>%
       addScaleBar(position='bottomleft') #%>%
-      if (input$goButton) {
-        if (ntype()=="Linear") {
-          m = m %>% setView(lng=bbc(n())[1], lat=bbc(n())[2], zoom=15) %>%
-            addPolygons(data=n(), fill=F, color='yellow', weight=2, group="Random feature")
-        } else if (ntype()=="Areal") {
-          m = m %>% setView(lng=bbc(n())[1], lat=bbc(n())[2], zoom=15) %>%
-            addPolylines(data=n(), color='yellow', weight=2, group="Random feature")
-        }
-      }
+      #if (input$rndButton) {
+      #  if (ntype()=="Linear") {
+      #    m = m %>% setView(lng=bbc(n())[1], lat=bbc(n())[2], zoom=15) %>%
+      #      addPolygons(data=n(), fill=F, color='yellow', weight=2, group="Random feature")
+      #  } else if (ntype()=="Areal") {
+      #    m = m %>% setView(lng=bbc(n())[1], lat=bbc(n())[2], zoom=15) %>%
+      #      addPolylines(data=n(), color='yellow', weight=2, group="Random feature")
+      #  }
+      #}
       if (is.null(input$gpkg)) {
         m <- m %>% 
           addLayersControl(position = "topright",
@@ -213,17 +237,62 @@ server = function(input, output, session) {
   })
 
   ##############################################################################
+  # View attribute tables
+  ##############################################################################
+  output$tab1a <- DT::renderDataTable({
+      req(input$mapButton)
+      x = st_drop_geometry(poly()) %>%
+        select(TYPE_INDUSTRY, TYPE_DISTURBANCE)
+      datatable(x, rownames=F, options=list(dom = 'tip', scrollX = TRUE, scrollY = TRUE, pageLength = 25), class="compact")
+  })
+
+  output$tab1b <- DT::renderDataTable({
+      req(input$mapButton)
+      x = st_drop_geometry(line()) %>%
+        select(TYPE_INDUSTRY, TYPE_DISTURBANCE)
+      datatable(x, rownames=F, options=list(dom = 'tip', scrollX = TRUE, scrollY = TRUE, pageLength = 25), class="compact")
+  })
+
+  ##############################################################################
   # View random feature (map and table)
   ##############################################################################
-  dta1 <- reactive({
+  dta2 <- reactive({
       x1 = st_drop_geometry(n())
       x2 = as_tibble(x1) %>% slice(1) %>% unlist(., use.names=FALSE)
       x = bind_cols(Attribute=names(x1), Value=x2)
   })
 
-  output$tab1 <- DT::renderDataTable({
-      x = dta1() #%>% filter(!Attribute %in% casVars)
+  output$tab2 <- DT::renderDataTable({
+      x = dta2() #%>% filter(!Attribute %in% casVars)
       datatable(x, rownames=F, options=list(dom = 'tip', scrollX = TRUE, scrollY = TRUE, pageLength = 25), class="compact")
+  })
+
+  output$map2 <- renderLeaflet({
+    m <- leaflet(options = leafletOptions(attributionControl=FALSE)) %>%
+      addTiles(google, group="Google.Imagery") %>%
+      addEsriImageMapLayer(url=spot, group="SPOT.Imagery") %>%
+      addProviderTiles("Esri.WorldTopoMap", group="Esri.WorldTopoMap") %>%
+      addProviderTiles("Esri.WorldImagery", group="Esri.WorldImagery") %>%
+      addScaleBar(position='bottomleft') #%>%
+      if (input$rndButton) {
+        if (ntype()=="Linear") {
+          m = m %>% setView(lng=bbc(n())[1], lat=bbc(n())[2], zoom=15) %>%
+            addPolygons(data=n(), fill=F, color='yellow', weight=2, group="Random feature")
+        } else if (ntype()=="Areal") {
+          m = m %>% setView(lng=bbc(n())[1], lat=bbc(n())[2], zoom=15) %>%
+            addPolylines(data=n(), color='yellow', weight=2, group="Random feature")
+        }
+        m <- m %>% addPolygons(data=bnd(), fill=F, weight=2, color='blue', group="Study area") %>%
+          addPolygons(data=poly(), fill=T, weight=1, color='red', fillOpacity=0.5, group="Areal disturbances") %>%
+          addPolylines(data=line(), weight=2, color='red', fillOpacity=1, group="Linear disturbances") %>%
+          #addPolygons(data=grd(), color="grey", weight=1, fill=F, group="Grid") %>%
+          addLayersControl(position = "topright",
+            baseGroups=c("Esri.WorldImagery","Google.Imagery","SPOT.Imagery","Esri.WorldTopoMap"),
+            overlayGroups = c("Study area","Areal disturbances","Linear disturbances"),
+            options = layersControlOptions(collapsed = F)) #%>%
+          #hideGroup(c("Study area","Areal disturbances","Linear disturbances"))
+      }
+    m
   })
 
   ##############################################################################
